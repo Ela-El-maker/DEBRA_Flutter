@@ -45,17 +45,17 @@ class SettingsScreen extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            title: const Text('Theme Preferences'),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ThemePreferencesScreen(),
-                ),
-              );
-            },
-          ),
+          // ListTile(
+          //   title: const Text('Theme Preferences'),
+          //   onTap: () {
+          //     Navigator.push(
+          //       context,
+          //       MaterialPageRoute(
+          //         builder: (context) => const ThemePreferencesScreen(),
+          //       ),
+          //     );
+          //   },
+          // ),
         ],
       ),
     );
@@ -97,54 +97,54 @@ class AccountSettingsScreen extends StatelessWidget {
   }
 }
 
-class ThemePreferencesScreen extends StatefulWidget {
-  const ThemePreferencesScreen({super.key});
+// class ThemePreferencesScreen extends StatefulWidget {
+//   const ThemePreferencesScreen({super.key});
 
-  @override
-  _ThemePreferencesScreenState createState() => _ThemePreferencesScreenState();
-}
+//   @override
+//   _ThemePreferencesScreenState createState() => _ThemePreferencesScreenState();
+// }
 
-class _ThemePreferencesScreenState extends State<ThemePreferencesScreen> {
-  String selectedTheme = 'light';
+// class _ThemePreferencesScreenState extends State<ThemePreferencesScreen> {
+//   String selectedTheme = 'light';
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
       
-      appBar: AppBar(
-        title: const Text('Theme Settings'),
-        foregroundColor: Colors.pink[200],
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Column(
-        children: [
-          RadioListTile<String>(
-            title: const Text('Light Theme'),
-            value: 'light',
-            groupValue: selectedTheme,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  selectedTheme = value;
-                });
-              }
-            },
-          ),
-          RadioListTile<String>(
-            title: const Text('Dark Theme'),
-            value: 'dark',
-            groupValue: selectedTheme,
-            onChanged: (String? value) {
-              if (value != null) {
-                setState(() {
-                  selectedTheme = value;
-                });
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
+//       appBar: AppBar(
+//         title: const Text('Theme Settings'),
+//         foregroundColor: Colors.pink[200],
+//         backgroundColor: Colors.white,
+//         elevation: 0,
+//       ),
+//       body: Column(
+//         children: [
+//           RadioListTile<String>(
+//             title: const Text('Light Theme'),
+//             value: 'light',
+//             groupValue: selectedTheme,
+//             onChanged: (String? value) {
+//               if (value != null) {
+//                 setState(() {
+//                   selectedTheme = value;
+//                 });
+//               }
+//             },
+//           ),
+//           RadioListTile<String>(
+//             title: const Text('Dark Theme'),
+//             value: 'dark',
+//             groupValue: selectedTheme,
+//             onChanged: (String? value) {
+//               if (value != null) {
+//                 setState(() {
+//                   selectedTheme = value;
+//                 });
+//               }
+//             },
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }

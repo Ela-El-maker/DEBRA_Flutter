@@ -219,7 +219,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     return password.length >= 8; // Example: Minimum length of 8 characters
   }
 
-  Future<void> remoteRegister() async {
+ Future<void> remoteRegister() async {
   try {
     http.Response response;
     var body = {
@@ -231,19 +231,18 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       'username': _usernameController.text.trim(),
     };
     response = await http.post(
-      Uri.parse("http://acs314flutter.xyz/acs314_debra/Notes/registration.php"),
+      Uri.parse("http://testflutter.felixeladi.co.ke/DebraSystem/register.php"),
       body: body,
     );
-    print(response.body);
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
     // Handle response
     if (response.statusCode == 200) {
-      print('Am here');
-      var serverResponse = json.decode(response.body);
-      print('Response is : ${response.body}');
-      var register = serverResponse["success"];
-      if (register == true) {
+      if (response.body.contains("New record created successfully")) {
+        // Registration success
         Get.toNamed("/");
       } else {
+        // Registration failed
         print('Registration failed');
       }
     }
@@ -254,5 +253,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 }
 
 
-
 }
+
+
+

@@ -187,7 +187,7 @@ class Login extends StatelessWidget {
     }
 
     try {
-      http.Response response = await http.post(
+      http.Response response = await http.get(
         Uri.parse(
             'http://testflutter.felixeladi.co.ke/DebraSystem/login.php?username=$username&password=$password'),
       );

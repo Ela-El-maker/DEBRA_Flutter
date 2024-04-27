@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/Controller/LoginController.dart';
-import 'package:flutter_application_1/components/list_button.dart';
-import 'package:flutter_application_1/components/list_data.dart';
-import 'package:flutter_application_1/views/editnote.dart';
-import 'package:flutter_application_1/views/login.dart';
-import 'package:flutter_application_1/views/newnote.dart';
+import 'package:flutter_application_1/Controller/foldercontroller.dart';
+import 'package:flutter_application_1/views/folderModel.dart';
+import '/Controller/LoginController.dart';
+
+import '/views/editnote.dart';
+import '/views/login.dart';
+import '/views/newnote.dart';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -28,7 +29,13 @@ class MyApp extends StatelessWidget {
   }
 }
 
+FolderController folderController = Get.put(FolderController());
 LoginController loginController = Get.put(LoginController());
+TextEditingController folderNameController = TextEditingController();
+
+TextEditingController titleController = TextEditingController();
+
+TextEditingController contentController = TextEditingController();
 
 class Dashboard extends StatefulWidget {
   const Dashboard({Key? key}) : super(key: key);
@@ -51,7 +58,7 @@ class _DashboardState extends State<Dashboard> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text('${loginController.username.value}'),
+        title: Text('Hello, ${loginController.username.value}'),
         foregroundColor: Colors.pink[200],
         backgroundColor: Colors.white,
         elevation: 0,
@@ -81,7 +88,7 @@ class _DashboardState extends State<Dashboard> {
                     ),
                   ),
                   // Text(
-                  //   '${loginController.username.value}',
+                  //   '',
                   //   style: TextStyle(
                   //     color: Color.fromARGB(255, 244, 108, 154),
                   //     fontSize: 24,
@@ -174,13 +181,42 @@ class _NotesListState extends State<NotesList> {
     Folder(name: 'Folder 2', notes: []),
   ];
 
+  void _addToFavoritesFromHomeScreen(int folderIndex) {
+    if (folders[folderIndex].notes.isNotEmpty) {
+      final Note noteToAdd = folders[folderIndex].notes.last;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Favorites(noteToAdd: noteToAdd),
+        ),
+      );
+    } else {
+      // Handle the case where the folder is empty
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Error'),
+          content: Text('The selected folder is empty.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/notepad_background.jpeg'),
+            image: AssetImage('assets/images/notepad background.jpeg'),
             fit: BoxFit.cover,
           ),
         ),
@@ -188,7 +224,6 @@ class _NotesListState extends State<NotesList> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Show list of folders
               Expanded(
                 child: ListView.builder(
                   itemCount: folders.length,
@@ -205,13 +240,15 @@ class _NotesListState extends State<NotesList> {
                       onDeleteFolder: () {
                         _deleteFolder(index);
                       },
+                      onAddToFavorites: () {
+                        _addToFavoritesFromHomeScreen(index);
+                      },
                     );
                   },
                 ),
               ),
               FloatingActionButton(
                 onPressed: () async {
-                  // Navigate to the screen for creating a new folder
                   final newFolderName = await showDialog<String>(
                     context: context,
                     builder: (context) => _buildAddFolderDialog(context),
@@ -232,8 +269,6 @@ class _NotesListState extends State<NotesList> {
   }
 
   Widget _buildAddFolderDialog(BuildContext context) {
-    TextEditingController folderNameController = TextEditingController();
-
     return AlertDialog(
       title: Text('Add Folder'),
       content: TextField(
@@ -249,11 +284,10 @@ class _NotesListState extends State<NotesList> {
         ),
         ElevatedButton(
           onPressed: () {
-            String folderName = folderNameController.text.trim();
-            if (folderName.isNotEmpty) {
-              Navigator.pop(context, folderName);
+            if (folderNameController.text.trim().isNotEmpty) {
+              addFolder();
+              Navigator.pop(context, folderNameController.text.trim());
             } else {
-              // Show an error message if the folder name is empty
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text('Folder name cannot be empty.'),
                 duration: Duration(seconds: 2),
@@ -303,6 +337,7 @@ class NotepadCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onAddNote;
   final VoidCallback? onDeleteFolder;
+  final VoidCallback? onAddToFavorites;
 
   const NotepadCard({
     required this.title,
@@ -310,6 +345,7 @@ class NotepadCard extends StatelessWidget {
     required this.onTap,
     this.onAddNote,
     this.onDeleteFolder,
+    this.onAddToFavorites,
   });
 
   @override
@@ -332,8 +368,7 @@ class NotepadCard extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 18.0,
                       fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(
-                          255, 244, 108, 154), // Set font color to pink
+                      color: Color.fromARGB(255, 244, 108, 154),
                     ),
                   ),
                   Row(
@@ -350,6 +385,12 @@ class NotepadCard extends StatelessWidget {
                           icon: Icon(Icons.delete),
                           tooltip: 'Delete Folder',
                         ),
+                      if (onAddToFavorites != null)
+                        IconButton(
+                          onPressed: onAddToFavorites,
+                          icon: Icon(Icons.favorite_border),
+                          tooltip: 'Add to Favorites',
+                        ),
                     ],
                   ),
                 ],
@@ -359,8 +400,7 @@ class NotepadCard extends StatelessWidget {
                 'Total Notes: $count',
                 style: const TextStyle(
                   fontSize: 16.0,
-                  color: Color.fromARGB(
-                      255, 244, 108, 154), // Set font color to pink
+                  color: Color.fromARGB(255, 244, 108, 154),
                 ),
               ),
             ],
@@ -372,10 +412,7 @@ class NotepadCard extends StatelessWidget {
 }
 
 class CreateNoteScreen extends StatelessWidget {
-  final Folder folder;
-  final TextEditingController titleController = TextEditingController();
-  final TextEditingController contentController = TextEditingController();
-
+  Folder folder;
   CreateNoteScreen({Key? key, required this.folder}) : super(key: key);
 
   @override
@@ -410,8 +447,13 @@ class CreateNoteScreen extends StatelessWidget {
                   content: contentController.text,
                   folder: folder,
                 );
-                // Return the new note to the previous screen
-                Navigator.pop(context, newNote);
+
+                Navigator.pop(
+                    context,
+                    Note(
+                        title: titleController.text.trim(),
+                        content: contentController.text.trim(),
+                        folder: folder));
               },
               child: Text('Save'),
             ),
@@ -462,7 +504,6 @@ class FolderNotesScreen extends StatelessWidget {
       ),
     ).then((editedNote) {
       if (editedNote != null) {
-        // Update the note in the folder
         int noteIndex =
             folder.notes.indexWhere((n) => n.title == editedNote.title);
         if (noteIndex != -1) {
@@ -508,7 +549,6 @@ class EditNoteScreen extends StatelessWidget {
                   content: contentController.text,
                   folder: note.folder,
                 );
-                // Return the edited note to the previous screen
                 Navigator.pop(context, editedNote);
               },
               child: Text('Save Changes'),
@@ -520,65 +560,237 @@ class EditNoteScreen extends StatelessWidget {
   }
 }
 
-// Function to add a new folder
-Future<void> addFolder(String folderName) async {
+// Future<void> addFolder() async {
+//   http.Response response;
+//   // String folderId;
+//   // var folderNameController;
+//   String folderName = folderNameController.text.trim();
+//   String username = loginController.username.value;
+//   Map<String, String> body = {
+//     // 'folderId': folderId,
+//     'folderName': folderName,
+//     'username': username,
+//   };
+
+//   try {
+//     response = await http.post(
+//         Uri.parse(
+//             'http://testflutter.felixeladi.co.ke/DebraSystem/createFolder.php'),
+//         body: body);
+
+//     if (response.statusCode == 200) {
+//       // Folder added successfully, handle accordingly
+//       print('Folder added successfully');
+//     } else {
+//       // Handle error
+//       print('Failed to add folder: ${response.statusCode}');
+//     }
+//   } catch (e) {
+//     // Handle exception
+//     print('Exception while adding folder: $e');
+//   }
+// }
+
+// // Function to add a new note to a folder
+// Future<void> addNoteToFolder() async {
+//   http.Response response;
+
+//   List<dynamic> folderId = folderController.folderList.value;
+//   String title = titleController.text.trim();
+//   String content = contentController.text.trim();
+//   Map<String, String> body = {
+//     // 'folderId': folderId,
+//     'title': title,
+//     'content': content,
+//   };
+//   try {
+//     final response = await http.post(
+//         Uri.parse(
+//             'http://testflutter.felixeladi.co.ke/DebraSystem/createNote.php'),
+//         body: body);
+
+//     if (response.statusCode == 200) {
+//       // Note added successfully, handle accordingly
+//       print('Note added successfully');
+//     } else {
+//       // Handle error
+//       print('Failed to add note: ${response.statusCode}');
+//     }
+//   } catch (e) {
+//     // Handle exception
+//     print('Exception while adding note: $e');
+//   }
+// }
+
+Future<void> addFolder() async {
+  http.Response response;
+
+  String username = loginController.username.value;
+  String folderName = folderNameController.text.trim();
+
+  Map<String, String> body = {
+    'username': username,
+    'folderName': folderName,
+  };
+
   try {
-    final response = await http.post(
-      Uri.parse('http://acs314flutter.xyz/acs314_debra/Notes/notes.php'),
-      body: {
-        'action': 'addFolder', // Action to indicate adding a folder
-        'folderName': folderName,
-      },
+    response = await http.post(
+        Uri.parse(
+            'http://testflutter.felixeladi.co.ke/DebraSystem/createFolder.php'),
+        body: body);
+
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(response.body);
+      if (jsonData['success'] == 1) {
+        // Return true if folder creation is successful
+      } else {
+        print('Error creating folder: ${jsonData['error']}');
+      }
+    } else {
+      print('Error creating folder: ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Error creating folder: $e');
+  }
+
+  // Return false if folder creation fails
+}
+
+Future<void> deleteFolder(int folderId) async {
+  String? username = loginController.username.value;
+  try {
+    final response = await http.get(
+      Uri.parse(
+          'http://testflutter.felixeladi.co.ke/DebraSystem/deleteFolder.php?username=$username'),
     );
 
     if (response.statusCode == 200) {
-      // Folder added successfully, handle accordingly
-      print('Folder added successfully');
+      final jsonData = jsonDecode(response.body);
+      if (jsonData['success'] == 1) {
+        // Folder deleted successfully
+        print('Deleted Successfully');
+      } else {
+        // Error deleting folder
+        print('Error deleting folder: ${jsonData['error']}');
+      }
     } else {
-      // Handle error
-      print('Failed to add folder: ${response.statusCode}');
+      // Server returned an error status code
+      print('Error deleting folder: ${response.statusCode}');
     }
   } catch (e) {
-    // Handle exception
-    print('Exception while adding folder: $e');
+    // Exception occurred during request
+    print('Error deleting folder: $e');
   }
 }
 
-// Function to add a new note to a folder
-Future<void> addNoteToFolder(
-    String folderId, String title, String content) async {
+Future<void> updateFolder(int folderId, String newName) async {
+  String username = loginController.username.value;
+  String folderName = newName;
   try {
     final response = await http.post(
-      Uri.parse('http://acs314flutter.xyz/acs314_debra/Notes/notes.php'),
-      body: {
-        'action': 'addNote', // Action to indicate adding a note
-        'folderId': folderId,
-        'title': title,
-        'content': content,
-      },
+      Uri.parse(
+          'http://testflutter.felixeladi.co.ke/DebraSystem/updateFolder.php?username=$username&folderName=$folderName'),
+      // body: {
+      //   'folderId': folderId.toString(),
+      //   'newName': newName,
+      // },
     );
 
     if (response.statusCode == 200) {
-      // Note added successfully, handle accordingly
-      print('Note added successfully');
+      final jsonData = jsonDecode(response.body);
+      if (jsonData['success'] == 1) {
+        // Folder updated successfully
+        print('Updated Successfully');
+      } else {
+        // Error updating folder
+        print('Error updating folder: ${jsonData['error']}');
+      }
     } else {
-      // Handle error
-      print('Failed to add note: ${response.statusCode}');
+      // Server returned an error status code
+      print('Error updating folder: ${response.statusCode}');
     }
   } catch (e) {
-    // Handle exception
-    print('Exception while adding note: $e');
+    // Exception occurred during request
+    print('Error updating folder: $e');
   }
 }
 
-class Favorites extends StatelessWidget {
-  const Favorites({Key? key}) : super(key: key);
+class Favorites extends StatefulWidget {
+  Note? noteToAdd;
+
+  Favorites({Key? key, this.noteToAdd}) : super(key: key);
+
+  @override
+  State<Favorites> createState() => _FavoritesState();
+}
+
+class _FavoritesState extends State<Favorites> {
+  List<Note> favoriteNotes = [];
+
+  void addToFavorites(Note note) {
+    setState(() {
+      if (!favoriteNotes.contains(note)) {
+        favoriteNotes.add(note);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Favorites'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Favorites'),
+        foregroundColor: Colors.pink[200],
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/notepad background.jpeg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: favoriteNotes.isEmpty
+            ? Center(
+                child: Text(
+                  'No favorite notes yet.',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.grey,
+                  ),
+                ),
+              )
+            : ListView.builder(
+                itemCount: favoriteNotes.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(favoriteNotes[index].title),
+                    subtitle: Text(favoriteNotes[index].content),
+                    onTap: () {
+                      _viewNoteDetails(context, favoriteNotes[index]);
+                    },
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        _removeFromFavorites(favoriteNotes[index]);
+                      },
+                    ),
+                  );
+                },
+              ),
+      ),
     );
+  }
+
+  void _viewNoteDetails(BuildContext context, Note note) {
+    // Implement navigation to view details of the note (similar to FolderNotesScreen)
+  }
+
+  void _removeFromFavorites(Note note) {
+    setState(() {
+      favoriteNotes.remove(note);
+    });
   }
 }
 
